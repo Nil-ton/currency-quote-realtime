@@ -112,7 +112,7 @@ function reset() {
   render();
 }
 
-let workApi = new Worker("./works/api.js", { type: "module" });
+let workApi = new Worker("./works/api.js");
 
 workApi.postMessage(PARAMS);
 render();
@@ -128,7 +128,7 @@ function render() {
   });
 }
 
-const workerConversor = new Worker("./works/conversao.js");
+let workerConversor = new Worker("./works/conversao.js");
 workerConversor.postMessage(PARAMS);
 
 workerConversor.addEventListener("message", (event) => {
@@ -158,6 +158,36 @@ workerConversor.addEventListener("message", (event) => {
   });
 });
 
+function resetAsk() {
+  workerConversor = new Worker("./works/conversao.js");
+  workerConversor.postMessage(PARAMS);
+  workerConversor.addEventListener("message", (event) => {
+    const quote = event.data;
+    const askStorage = window.localStorage.getItem("Ask");
+    inputField1.addEventListener("input", (e) => {
+      const value = e.target.value;
+      if (askStorage && !isNaN(value)) {
+        inputField2.value = (Number(value) * Number(askStorage)).toFixed(2);
+      }
+      if (!isNaN(value)) {
+        inputField2.value =
+          value === "" ? "" : (Number(value) * quote).toFixed(2);
+      }
+    });
+    inputField2.addEventListener("input", (e) => {
+      const value = e.target.value;
+      if (askStorage && !isNaN(value)) {
+        inputField1.value = (Number(value) * Number(askStorage)).toFixed(2);
+      }
+
+      if (!isNaN(value)) {
+        inputField1.value =
+          value === "" ? "" : (Number(value) * quote).toFixed(2);
+      }
+    });
+  });
+}
+
 // CSS
 select1Element.addEventListener("focus", () => {
   inputField1.classList.add("focused");
@@ -178,14 +208,18 @@ select2Element.addEventListener("blur", () => {
 // select interação
 select1Element.addEventListener("change", (e) => {
   workApi.terminate();
+  workerConversor.terminate();
   PARAMS = `${e.target.value}-${select2Value}`;
   select1Value = e.target.value;
+  resetAsk();
   reset();
 });
 
 select2Element.addEventListener("change", (e) => {
   workApi.terminate();
+  workerConversor.terminate();
   PARAMS = `${select1Value}-${e.target.value}`;
   select2Value = e.target.value;
+  resetAsk();
   reset();
 });

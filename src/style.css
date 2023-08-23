@@ -136,3 +136,14 @@ body {
   .none {
     display: none;
   }
+
+  .graphic {
+    width: 100%;
+}
+
+  @media (max-width: 768px) {
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+  }
