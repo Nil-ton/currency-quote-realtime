@@ -10,7 +10,9 @@ Real-Time Updating: I configured the application to update exchange rates at reg
 # Estrutura
 
 `./src/script.js`: Funções principais de renderização dos dados e iniciação do webworkers.
+
 `./src/works/api.js`: Thread responvavel pela atualização em tempo real do gráfico.
+
 `./src/works/conversao.js`: Thread responsavel pela api de conversões das moedas. 
 
 
