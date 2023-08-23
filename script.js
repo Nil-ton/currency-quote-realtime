@@ -1,4 +1,4 @@
-import { generateDate } from "./util/generateDate.js";
+import { generateDate } from "./src/util/generateDate.js";
 const graphicContainerElement = document.querySelector(".graphic-container");
 const containerElement = document.querySelector(".container");
 const loaderElement = document.querySelector(".loader");
