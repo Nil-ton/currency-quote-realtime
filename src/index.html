@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script defer src="./script.js" type="module"></script>
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <div class="loader"></div>
+
+    <div class="container none">
+        <div class="exchange-currency">
+        </div>
+        <div class="exchange-rate">
+            
+        </div>
+        <div class="timestamp"> 
+            <span class="date"></span>
+        </div>
+        <div class="conversion-form">
+            <div class="input-container">
+                <input type="text" class="input-field">
+                <span class="divide"></span>
+                <select class="select-1">
+                    <option value="BRL">Real Brasileiro</option>
+                    <option value="USD" selected>Dólar Americano</option>
+                    <option value="EUR">Euro</option>
+                    <option value="BTC">Bitcoin</option>
+                    <option value="JPY">Iene</option>
+                </select>
+            </div>
+            <div class="input-container">
+                <input type="text" class="input-field">
+                <span class="divide"></span>
+                <select class="select-2">
+                    <option value="BRL">Real Brasileiro</option>
+                    <option value="USD">Dólar Americano</option>
+                    <option value="EUR">Euro</option>
+                    <option value="JPY">Iene</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="graphic-container none">
+        <canvas id="graphic"></canvas>
+    </div>
+</body>
+
+</html>
