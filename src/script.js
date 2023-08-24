@@ -1,3 +1,4 @@
+import './style.css'
 const graphicContainerElement = document.querySelector(".graphic-container");
 const containerElement = document.querySelector(".container");
 const loaderElement = document.querySelector(".loader");
@@ -15,6 +16,8 @@ const inputField2 = document.querySelector(
 );
 let select1Value = select1Element.value;
 let select2Value = select2Element.value;
+import apiWorker from './works/api.worker.js'
+import conversaoWorker from './works/conversao.worker.js'
 
 let PARAMS = `${select1Element.value}-${select2Element.value}`;
 
@@ -106,12 +109,12 @@ function resetGraphic() {
 
 function reset() {
   resetGraphic();
-  workApi = new Worker("./works/api.js");
+  workApi = new apiWorker();
   workApi.postMessage(PARAMS);
   render();
 }
 
-let workApi = new Worker("./works/api.js");
+let workApi = new apiWorker();
 
 workApi.postMessage(PARAMS);
 render();
@@ -127,7 +130,7 @@ function render() {
   });
 }
 
-let workerConversor = new Worker("./works/conversao.js");
+let workerConversor = new conversaoWorker();
 workerConversor.postMessage(PARAMS);
 
 workerConversor.addEventListener("message", (event) => {
@@ -158,7 +161,7 @@ workerConversor.addEventListener("message", (event) => {
 });
 
 function resetAsk() {
-  workerConversor = new Worker("./works/conversao.js");
+  workerConversor = new conversaoWorker();
   workerConversor.postMessage(PARAMS);
   workerConversor.addEventListener("message", (event) => {
     const quote = event.data;
