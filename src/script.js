@@ -1,8 +1,12 @@
-import './style.css'
+import { Graphics } from "./graphics/Graphics.js";
+import { combinations } from "./util/currencys.js";
+import apiWorker from "./works/api.worker.js";
+import conversaoWorker from "./works/conversao.worker.js";
+import "./style.css";
+import { WorkerService } from "./service/WorkerService.js";
 const graphicContainerElement = document.querySelector(".graphic-container");
 const containerElement = document.querySelector(".container");
 const loaderElement = document.querySelector(".loader");
-const graphicElement = document.getElementById("graphic");
 const dateElement = document.querySelector(".date");
 const exchangeRateElement = document.querySelector(".exchange-rate");
 const exchangeCurrencyElement = document.querySelector(".exchange-currency");
@@ -14,183 +18,74 @@ const inputField1 = document.querySelector(
 const inputField2 = document.querySelector(
   ".input-container:nth-child(2) .input-field"
 );
-let select1Value = select1Element.value;
-let select2Value = select2Element.value;
-import apiWorker from './works/api.worker.js'
-import conversaoWorker from './works/conversao.worker.js'
 
-let PARAMS = `${select1Element.value}-${select2Element.value}`;
+combinations.forEach((currencyQuote, i) => {
+  const worker = new WorkerService();
+  worker.apiPostMessage(currencyQuote);
 
-const graphicChart = new Chart(graphicElement, {
-  type: "line",
-  data: {
-    labels: [],
-    datasets: [
-      {
-        label: "",
-        data: [],
-      },
-    ],
-  },
-  options: {
-    scales: {
-      y: {
-        ticks: {
-          maxTicksLimit: 5,
-        },
-      },
-    },
-  },
-});
+  const div = document.createElement("div");
+  const canvaElement = document.createElement("canvas");
+  const chart = new Graphics(canvaElement);
+  div.appendChild(canvaElement);
+  div.setAttribute("id", currencyQuote);
+  div.setAttribute("class", "chart");
 
-function preRender() {
-  graphicContainerElement.setAttribute("class", "graphic-container");
-  containerElement.setAttribute("class", "container");
-  loaderElement.setAttribute("class", "none");
-}
+  graphicContainerElement.appendChild(div);
 
-function handleExchangeCurrency(name, rate) {
-  const [currentName] = name?.split("/");
-  exchangeCurrencyElement.textContent = `${rate} ${currentName} igual a`;
-  window.localStorage.setItem(
-    "ExchangeCurrency",
-    JSON.stringify({ name: "Dólar Americano/", rate: 1 })
-  );
-}
-
-function handleExchangeRate(name, rate) {
-  const [, currentName] = name?.split("/");
-  const newRate = Number(rate).toFixed(2).toString().replace(".", ",");
-  exchangeRateElement.textContent = `${newRate} ${currentName}`;
-
-  window.localStorage.setItem(
-    "ExchangeRate",
-    JSON.stringify({ name: "/Real Brasileiro", rate })
-  );
-}
-
-function handleDate(date) {
-  dateElement.textContent = date;
-  window.localStorage.setItem("Date", date);
-}
-
-function handleGraphicChart(currencyQuote) {
-  const [currentName] = currencyQuote?.name?.split("/");
-  graphicChart.data.labels.push(currencyQuote?.hoursAndSeconds);
-  graphicChart.data.datasets.forEach((currentDataset) => {
-    currentDataset.label = currentName;
-    currentDataset.data.push(currencyQuote?.ask);
-
-    if (currencyQuote.data && currencyQuote.data.length >= 5) {
-      currentDataset.data.shift();
-    }
-  });
-
-  if (graphicChart?.data?.labels.length >= 7) {
-    graphicChart?.data?.labels.shift();
-    graphicChart?.data?.labels.shift();
-  }
-
-  graphicChart.update();
-}
-
-function resetGraphic() {
-  graphicChart.data = {
-    labels: [],
-    datasets: [
-      {
-        label: "",
-        data: [],
-        borderWidth: 1,
-      },
-    ],
-  };
-}
-
-function reset() {
-  resetGraphic();
-  workApi = new apiWorker();
-  workApi.postMessage(PARAMS);
-  render();
-}
-
-let workApi = new apiWorker();
-
-workApi.postMessage(PARAMS);
-render();
-
-function render() {
-  workApi.addEventListener("message", (e) => {
-    const currencyQuote = e.data;
-    window.localStorage.setItem("Ask", currencyQuote.ask);
-    handleDate(currencyQuote.date);
-    handleExchangeCurrency(currencyQuote.name, 1);
-    handleExchangeRate(currencyQuote.name, currencyQuote.ask);
-    handleGraphicChart(currencyQuote);
-  });
-}
-
-let workerConversor = new conversaoWorker();
-workerConversor.postMessage(PARAMS);
-
-workerConversor.addEventListener("message", (event) => {
-  preRender();
-  const quote = event.data;
-  const askStorage = window.localStorage.getItem("Ask");
-  inputField1.addEventListener("input", (e) => {
-    const value = e.target.value;
-    if (askStorage && !isNaN(value)) {
-      inputField2.value = (Number(value) * Number(askStorage)).toFixed(2);
-    }
-    if (!isNaN(value)) {
-      inputField2.value =
-        value === "" ? "" : (Number(value) * quote).toFixed(2);
-    }
-  });
-  inputField2.addEventListener("input", (e) => {
-    const value = e.target.value;
-    if (askStorage && !isNaN(value)) {
-      inputField1.value = (Number(value) * Number(askStorage)).toFixed(2);
-    }
-
-    if (!isNaN(value)) {
-      inputField1.value =
-        value === "" ? "" : (Number(value) * quote).toFixed(2);
-    }
-  });
-});
-
-function resetAsk() {
-  workerConversor = new conversaoWorker();
-  workerConversor.postMessage(PARAMS);
-  workerConversor.addEventListener("message", (event) => {
-    const quote = event.data;
-    const askStorage = window.localStorage.getItem("Ask");
-    inputField1.addEventListener("input", (e) => {
-      const value = e.target.value;
-      if (askStorage && !isNaN(value)) {
-        inputField2.value = (Number(value) * Number(askStorage)).toFixed(2);
-      }
-      if (!isNaN(value)) {
+  worker.apiEvent((e) => {
+    const id = `${select1Element.value}-${select2Element.value}`;
+    inputField1.addEventListener("input", (inputEvent) => {
+      if (inputEvent.target.value === "") {
+        inputField2.value = "";
+      } else if (worker.asks.get(id)) {
         inputField2.value =
-          value === "" ? "" : (Number(value) * quote).toFixed(2);
+          Number(worker.asks.get(id)) * Number(inputEvent.target.value);
       }
     });
-    inputField2.addEventListener("input", (e) => {
-      const value = e.target.value;
-      if (askStorage && !isNaN(value)) {
-        inputField1.value = (Number(value) * Number(askStorage)).toFixed(2);
-      }
 
-      if (!isNaN(value)) {
+    inputField2.addEventListener("input", (inputEvent) => {
+      if (inputEvent.target.value === "") {
+        inputField1.value = "";
+      } else if (worker.asks.get(id)) {
         inputField1.value =
-          value === "" ? "" : (Number(value) * quote).toFixed(2);
+          Number(worker.asks.get(id)) * Number(inputEvent.target.value);
       }
     });
-  });
-}
 
-// CSS
+    if (i === combinations.length - 1) {
+      graphicContainerElement.setAttribute("class", "graphic-container");
+      containerElement.setAttribute("class", "container");
+      loaderElement.setAttribute("class", "loader none");
+    }
+
+    dateElement.textContent = e.data.date;
+    chart.push(e.data);
+  });
+
+  if (i !== 0) {
+    div.setAttribute("class", "none");
+  }
+});
+
+const updateChartDisplay = (value) => {
+  const chartSelect = document.getElementById(value);
+  const chartCurrenty = document.querySelector(`.chart`);
+
+  chartCurrenty?.setAttribute("class", "none");
+  chartSelect?.setAttribute("class", "chart");
+};
+
+select1Element.addEventListener("input", (e) => {
+  const value = `${e.target.value}-${select2Element.value}`;
+  updateChartDisplay(value);
+});
+
+select2Element.addEventListener("input", (e) => {
+  const value = `${select1Element.value}-${e.target.value}`;
+  updateChartDisplay(value);
+});
+
+// css
 select1Element.addEventListener("focus", () => {
   inputField1.classList.add("focused");
 });
@@ -205,23 +100,4 @@ select2Element.addEventListener("focus", () => {
 
 select2Element.addEventListener("blur", () => {
   inputField2.classList.remove("focused");
-});
-
-// select interação
-select1Element.addEventListener("change", (e) => {
-  workApi.terminate();
-  workerConversor.terminate();
-  PARAMS = `${e.target.value}-${select2Value}`;
-  select1Value = e.target.value;
-  resetAsk();
-  reset();
-});
-
-select2Element.addEventListener("change", (e) => {
-  workApi.terminate();
-  workerConversor.terminate();
-  PARAMS = `${select1Value}-${e.target.value}`;
-  select2Value = e.target.value;
-  resetAsk();
-  reset();
 });

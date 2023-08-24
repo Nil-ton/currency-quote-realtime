@@ -44,6 +44,7 @@ const CURRENCY_QUOTE_API = async (quote) => {
     ...data[paramsTransform],
     date: date,
     hoursAndSeconds: hoursAndSeconds,
+    ask: { id: quote, value: data[paramsTransform]?.ask },
   };
 };
 
